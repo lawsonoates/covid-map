@@ -2,7 +2,10 @@ import { VectorMap } from '@south-paw/react-vector-maps';
 import World from './maps/world.json';
 import styled from 'styled-components';
 
-function Map() {
+import axios from 'axios';
+import { useState } from 'react';
+
+function Map(props) {
 
     const Mape = styled.div`
         margin: 1rem auto;
@@ -28,17 +31,34 @@ function Map() {
                 }
             }
         }
-
     `
 
+    const onClick = ({ target }) => {
+        fetchRegion(target.attributes.id.value);
+    }
+
+    const fetchRegion = async regionId => {
+
+        const config = {
+            method: 'post',
+            url: 'http://localhost:4000/stats',
+            responseType: 'json',
+            data: {code: regionId}
+        }
+
+        try {
+            const resp = await axios(config)
+            props.onChange(resp.data)
+            console.log(resp.data)
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
     return (
-
-      
-            <Mape>
-                <VectorMap className='WorldMap' {...World} />
-            </Mape>
-       
-
+        <Mape>
+            <VectorMap className='WorldMap' {...World} layerProps={{ onClick }} />
+        </Mape>
     );
 }
 
