@@ -32,6 +32,38 @@ def get_sum(series):
     sum = int(series.sum())
     return '{:,}'.format(sum)
 
+def search_series(query):
+
+    query = query.lower()
+    df = pd.read_csv('lookup.csv')
+
+    regions_series = df.loc[:, 'Country_Region']
+
+    prev_value = ''
+    for index, value in regions_series.items():
+        
+        if value == prev_value:   
+            regions_series = regions_series.drop([index], axis=0)
+
+        prev_value = value
+
+    exact = False
+    result = []
+    # print(regions_series)
+    for index, value in regions_series.items():
+        # print(f'Index: {index}, Value: {value}')
+        value = value.lower()
+        if value == query and not exact:
+            result = [value]
+        elif value == query and exact:
+            result.append(value)
+        elif value.startswith(query) and not exact:
+            result.append(value)
+
+    return result
+
 if __name__ == '__main__':
-    country_region = get_country_region('AU')
-    print(type(int(get_series(country_region, 'Confirmed').sum())))
+    # country_region = get_country_region('AU')
+    # print(type(int(get_series(country_region, 'Confirmed').sum())))
+    print(search_series('Aus'))
+    # print('aust'.startswith('au'))

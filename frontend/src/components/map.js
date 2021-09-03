@@ -3,7 +3,6 @@ import World from './maps/world.json';
 import styled from 'styled-components';
 
 import axios from 'axios';
-import { useState } from 'react';
 
 function Map(props) {
 

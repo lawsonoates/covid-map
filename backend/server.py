@@ -2,7 +2,7 @@ from flask import Flask, json, jsonify, request, send_file
 from flask_cors import CORS
 from json import dumps
 
-from covid_analysis import get_country_region, get_series, get_sum
+from covid_analysis import get_country_region, get_series, get_sum, search_series
 
 APP = Flask(__name__)
 CORS(APP)
@@ -18,6 +18,16 @@ def stats():
         'deaths': get_sum(get_series(country_region, 'Deaths')),
         'confirmed': get_sum(get_series(country_region, 'Confirmed'))
     }
+    return jsonify(data)
+
+@APP.route('/search', methods=['POST'])
+def search():
+    payload = request.get_json()
+    query = payload['query']
+    regions = search_series(query)
+    data = []
+    for i in range(0,len(regions)):
+        data.append({'id': i, 'value': regions[i]})
     return jsonify(data)
 
 if __name__ == '__main__':
