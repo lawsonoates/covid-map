@@ -13,12 +13,18 @@ def region_search(code):
 
 def get_data():
 
-    req = requests.get(URL + '/08-31-2021.csv')
+    dates = ['09-05-2021', '09-04-2021', '09-03-2021', '09-02-2021', '09-01-2021', '08-31-2021', '08-30-2021']
 
-    url_content = req.content
-    csv_file = open('downloaded.csv', 'wb')
+    for date in dates:
+        req = requests.get(URL + f'/{date}.csv')
 
-    csv_file.write(url_content)
-    csv_file.close()
+        url_content = req.content
+        csv_file = open(f'./reports/{date}.csv', 'wb')
+
+        csv_file.write(url_content)
+        csv_file.close()
 
     return url_content
+
+if __name__ == '__main__':
+    get_data()

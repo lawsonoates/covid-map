@@ -1,16 +1,15 @@
 import { useState } from 'react';
-import { Header, Input } from 'semantic-ui-react';
+import { Header, Search, Label } from 'semantic-ui-react';
 
 import axios from 'axios';
 
-import SearchList from './searchList';
+const resultRenderer = ({ location }) => <Label content={location} />
 
 function Sidebar(props) {
 
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState({
-        regions: []
-    });
+    const [results, setResults] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     function handleChange(e) {
         setQuery(e.target.value)
@@ -18,6 +17,7 @@ function Sidebar(props) {
     }
 
     const fetchRegion = async query => {
+        setLoading(true);
 
         const config = {
             method: 'post',
@@ -28,26 +28,32 @@ function Sidebar(props) {
         if (query.length !== 0) {
             try {
                 const resp = await axios(config)
-                setResults({
-                    regions: resp.data
-                })
+                setResults(resp.data)
             } catch (e) {
                 console.log(e);
             }
         } else {
-            setResults({
-                regions: []
-            })
+            setResults([])
         }
+
+        setLoading(false);
     }
 
     return (
         <div>
-            <Input placeholder='Search...' onChange={handleChange} value={query} />
+            <Search
+                loading={loading}
+                value={query}
+                results={results}
+                onSearchChange={handleChange}
+                resultRenderer={resultRenderer}
+                onResultSelect={(e, data) => props.onChange(data.result.location)}
+            />
+
             <Header as='h2'>{props.region}</Header>
             <p>Total Deaths: {props.deaths}</p>
             <p>Total Cases: {props.confirmed}</p>
-            <SearchList results={results}/>
+
         </div>
 
     )

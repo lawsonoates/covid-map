@@ -36,19 +36,18 @@ function Map(props) {
         fetchRegion(target.attributes.id.value);
     }
 
-    const fetchRegion = async regionId => {
+    const fetchRegion = async id => {
 
         const config = {
             method: 'post',
-            url: 'http://localhost:4000/stats',
+            url: 'http://localhost:4000/iso_location_name',
             responseType: 'json',
-            data: {code: regionId}
+            data: {iso: id}
         }
 
         try {
             const resp = await axios(config)
-            props.onChange(resp.data)
-            console.log(resp.data)
+            props.onChange(resp.data['location'])
         } catch (e) {
             console.log(e);
         }

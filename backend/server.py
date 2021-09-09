@@ -1,8 +1,8 @@
-from flask import Flask, json, jsonify, request, send_file
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-from json import dumps
 
-from covid_analysis import get_country_region, get_series, get_sum, search_series
+from covid_analysis import get_country_region, get_series, get_sum
+from db import query_location, query_location_iso
 
 APP = Flask(__name__)
 CORS(APP)
@@ -20,15 +20,24 @@ def stats():
     }
     return jsonify(data)
 
+@APP.route('/iso_location_name', methods=['POST'])
+def iso_location_name():
+    payload = request.get_json()
+    iso = payload['iso'].upper()
+    location = query_location_iso(iso)
+
+    return jsonify({'location': location})
+
 @APP.route('/search', methods=['POST'])
 def search():
     payload = request.get_json()
     query = payload['query']
-    regions = search_series(query)
-    data = []
-    for i in range(0,len(regions)):
-        data.append({'id': i, 'value': regions[i]})
-    return jsonify(data)
+    result = query_location('country_region', query)
+    resp = []
+    for count, value in enumerate(result):
+        resp.append({'location': value})
+
+    return jsonify(resp)
 
 if __name__ == '__main__':
     APP.run(host='0.0.0.0', port=4000)

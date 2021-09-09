@@ -8,29 +8,21 @@ import Sidebar from './components/sidebar';
 
 function App() {
 
-    // const [region, setRegion] = useState('au');
     const [stats, setStats] = useState({
         region: 'World',
         deaths: 0,
         confirmed: 0
     })
-
-    // useEffect(() => {
-
-    // // });
-    // function handleRegionChange() {
-    //     region => setRegion(region)
-
-    // }
+    const [location, setLocation] = useState('world');
 
     return (
         <div className="App">
             <Segment>
-                <Map region={stats.region} onChange={stats => setStats(stats)}/>
+                <Map region={location} onChange={location => setLocation(location)}/>
 
                 <Rail attached internal position='left'>
                     <Segment>
-                        <Sidebar region={stats.region} deaths={stats.deaths} confirmed={stats.confirmed}/>
+                        <Sidebar region={location} deaths={stats.deaths} confirmed={stats.confirmed} onChange={location => setLocation(location)}/>
                     </Segment>
                 </Rail>
             </Segment>
