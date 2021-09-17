@@ -24,7 +24,7 @@ function Sidebar(props) {
                 </Table.Row>
             </Table>
 
-
+            <p>last updated {props.lastUpdate}</p>
         </div>
     )
 }

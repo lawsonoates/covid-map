@@ -1,13 +1,10 @@
-# from server import stats
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import csv
 import os
 
-from datetime import date, datetime
+from datetime import datetime
 from src.error import InputError
-# from src.stats import stats_max_daily_report
-
 
 CSV_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
@@ -98,7 +95,7 @@ def db_put_into_collection(summary, collection):
     found = False
     for location in collection:
         if location['country_region'] == summary['country_region']:
-            # location['last_update'] = get_latest_date(location['last_update'], summary['last_update'], CSV_TIME_FORMAT)
+            location['last_update'] = db_latest_date(location['last_update'], summary['last_update'], CSV_TIME_FORMAT)
             location['daily_reports'].append({
                 'confirmed': summary['confirmed'],
                 'deaths': summary['deaths']
@@ -117,19 +114,23 @@ def db_put_into_collection(summary, collection):
 
     return collection
 
-def get_latest_date(date1, date2, format):
+def db_latest_date(date1, date2, format):
 
-    date1_date = datetime.strptime(date1, format)
-    date2_date = datetime.strptime(date2, format)
+    if date1 == '':
+        return date2
+    elif date2 == '':
+        return date1
+    else:
+        date1_date = datetime.strptime(date1, format)
+        date2_date = datetime.strptime(date2, format)
 
-    # print(date1_date + ' | ' + date2_date)
-    date_max = max([date1_date, date2_date])
+        date_max = max([date1_date, date2_date])
 
-    date_str = date_max.strftime(format)
+        date_str = date_max.strftime(format)
 
-    return date_str
+        return date_str
 
-def get_indexes():
+def db_indexes():
 
     count = 0
     with open('./lookup.csv') as file:
@@ -171,32 +172,15 @@ def match_collection_id(collection_primary, collection_secondary):
         'secondary': collection_secondary
     }
 
+def db_remove_collection(collection_names):
+    for name in collection_names:
+        col = covid_stats[name]
+        col.drop()
 
-def add_docs_db(collection_name, docs):
+def db_add_docs(collection_name, docs):
     collection = covid_stats[collection_name]
     doc_id = collection.insert_many(docs).inserted_ids
     print(doc_id)
-
-def query_document(collection_name, query):
-    result = covid_stats[collection_name].find(query)
-    return [x for x in result]
-
-def query_location(property, country_region):
-    result = query_document('locations', {'country_region': {'$regex': f'{country_region}', '$options': '$i'}})
-
-    return [x[property] for x in result]
-
-def query_location_fixed(location):
-    result = query_document('locations', {'country_region': location})
-    print(len(result) != 1)
-    if len(result) != 1:
-        raise InputError('invalid location input')
-    else:
-        return result[0]['ISO2']
-
-def query_location_iso(iso):
-    result = query_document('locations', {'ISO2': iso})
-    return [x['country_region'] for x in result]
 
 def stats_max_daily_report(daily_reports):
     
@@ -207,63 +191,19 @@ def stats_max_daily_report(daily_reports):
 
     return max
 
-def insert_analysis():
-
-    reports = list(covid_stats['reports'].find())
-    for report in reports:
-        if report['country_region'] == 'Australia':
-            daily_reports = stats_max_daily_report(report['daily_reports'])
-            population = query_document('locations', {'_id': report['location_id']})
-            return population
-            # report['incident_rate'] = 
-
-    return reports
-
 def db_update(status):
-    get_indexes()
+    db_indexes()
     collections = match_collection_id(get_lookup_collection(), get_reports_collection())
 
-    # print(collections)
+    db_remove_collection(['reports', 'locations'])
 
     if status == 'all':
-        add_docs_db('reports', collections['secondary'])
-        add_docs_db('locations', collections['primary'])
+        db_add_docs('reports', collections['secondary'])
+        db_add_docs('locations', collections['primary'])
     elif status == 'r':
-        add_docs_db('reports', collections['secondary'])
+        db_add_docs('reports', collections['secondary'])
 
 if __name__ == '__main__':
-    get_indexes()
+    db_indexes()
 
-    
-    
-    # print(get_reports_collection())
-
-    # print(query_location_iso('AU'))
-    # print(query_location_fixed('Australia'))
-    # print(get_lookup_collection())
-    # data = insert_analysis()
-    # print(data)
-
-    collection1 = [{
-        'UID': '36',
-        'ISO2': 'AU',
-        'country_region': 'Australia',
-        'population': '25459700'
-    }]
-
-    collection2 = [{
-        'country_region': 'Australia',
-        'last_update': '2021-09-03 04:21:20',
-        'daily_reports': [
-            { 'confirmed': 58208, 'deaths': 1032 },
-            { 'confirmed': 55093, 'deaths': 1012 },
-            { 'confirmed': 61619, 'deaths': 1039 },
-            { 'confirmed': 59949, 'deaths': 1036 },
-            { 'confirmed': 56560, 'deaths': 1019 },
-            { 'confirmed': 64621, 'deaths': 1052 },
-            { 'confirmed': 63155, 'deaths': 1044 }
-        ]
-    }]
-
-    # print(match_collection_id(collection1, collection2))
     db_update('all')

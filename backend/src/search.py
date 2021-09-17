@@ -1,4 +1,4 @@
-from src.db import query_location, query_location_fixed
+from src.query import query_location_fixed, query_document_property
 from src.error import InputError
 
 def search_query(query):
@@ -9,7 +9,8 @@ def search_query(query):
     Return:
         List of dictionaries of locations
     ''' 
-    locations = query_location('country_region', query)
+    # locations = query_location('country_region', query)
+    locations = query_document_property('locations', query, 'country_region', 'country_region')
     locations_formatted = []
     for count, value in enumerate(locations):
         locations_formatted.append({'location': value})

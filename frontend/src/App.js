@@ -12,7 +12,8 @@ function App() {
     const [stats, setStats] = useState({
         deaths: '',
         confirmed: '',
-        status: ''
+        status: '',
+        lastUpdate: ''
     })
     const [location, setLocation] = useState('Australia');
     // const [iso, setISO] = useState('');
@@ -37,7 +38,8 @@ function App() {
             const resp = await axios(config)
             setStats({
                 deaths: resp.data['deaths'].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','),
-                confirmed: resp.data['confirmed'].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                confirmed: resp.data['confirmed'].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','),
+                lastUpdate: resp.data['last_update']
             })
         } catch (e) {
             console.log(e);
@@ -55,6 +57,7 @@ function App() {
                             location={location}
                             deaths={stats.deaths}
                             confirmed={stats.confirmed}
+                            lastUpdate={stats.lastUpdate}
                             status={stats.status}
                             onChange={locations => setLocation(locations)}
                         />
