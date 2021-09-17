@@ -2,3 +2,4 @@ frontend/node_modules
 backend/env
 backend/reports
 backend/__pycache__
+scripts/
