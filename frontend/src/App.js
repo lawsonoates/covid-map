@@ -13,10 +13,11 @@ function App() {
         deaths: '',
         confirmed: '',
         status: '',
-        lastUpdate: ''
+        lastUpdate: '',
+        incidentRate: '',
+        caseFatalityRatio: ''
     })
     const [location, setLocation] = useState('Australia');
-    // const [iso, setISO] = useState('');
 
     useEffect(() => {
         if (location !== '') {
@@ -39,7 +40,9 @@ function App() {
             setStats({
                 deaths: resp.data['deaths'].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','),
                 confirmed: resp.data['confirmed'].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','),
-                lastUpdate: resp.data['last_update']
+                lastUpdate: resp.data['last_update'],
+                incidentRate: resp.data['incident_rate'],
+                caseFatalityRatio: resp.data['case_fatality_ratio']
             })
         } catch (e) {
             console.log(e);
@@ -58,6 +61,8 @@ function App() {
                             deaths={stats.deaths}
                             confirmed={stats.confirmed}
                             lastUpdate={stats.lastUpdate}
+                            incidentRate={stats.incidentRate}
+                            caseFatalityRatio={stats.caseFatalityRatio}
                             status={stats.status}
                             onChange={locations => setLocation(locations)}
                         />

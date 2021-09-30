@@ -1,8 +1,8 @@
 from os import stat
 
-from bson.objectid import ObjectId
+
 from src.query import query_document
-from bson.objectid import ObjectId
+from src.tools import latest_daily_report
 
 def stats_query(location):
 
@@ -12,30 +12,33 @@ def stats_query(location):
     reports = query_document('reports', {'location_id': id})
     report = reports[0]
 
-    daily_report = stats_latest_daily_report(report['daily_reports'])
+    daily_report = latest_daily_report(report['daily_reports'])
+    # print(report)
 
     stats = {
         'confirmed': daily_report['confirmed'],
         'deaths': daily_report['deaths'],
-        'last_update': report['last_update']
+        'last_update': report['last_update'],
+        'incident_rate': report['incident_rate'],
+        'case_fatality_ratio': report['case_fatality_ratio']
     }
     
     return stats
 
-def stats_latest_daily_report(daily_reports):
-    '''
-    Arguments:
-        daily_reports (list of dictionaries) - daily reports
+# def stats_latest_daily_report(daily_reports):
+#     '''
+#     Arguments:
+#         daily_reports (list of dictionaries) - daily reports
 
-    Return:
-        Latest daily report (dictionary)
-    ''' 
-    max = {'confirmed': 0, 'deaths': 0}
-    for day in daily_reports:
-        if day['confirmed'] > max['confirmed']:
-            max = day
+#     Return:
+#         Latest daily report (dictionary)
+#     ''' 
+#     max = {'confirmed': 0, 'deaths': 0}
+#     for day in daily_reports:
+#         if day['confirmed'] > max['confirmed']:
+#             max = day
 
-    return max
+#     return max
 
 
 if __name__ == '__main__':

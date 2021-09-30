@@ -13,12 +13,17 @@ def query_document(collection_name, query):
     result = covid_stats[collection_name].find(query)
     return list(result)
 
-# def query_location(property, country_region):
-#     result = query_document('locations', {'country_region': {'$regex': f'{country_region}', '$options': '$i'}})
-
-#     return [x[property] for x in result]
-
 def query_document_property(collection_name, query_value, property_desired, property_query):
+    '''
+    Arguments:
+        collection_name (string) - name of collection to query
+        query_value (string) - value of query
+        property_desired (string) - property to be returned from document
+        property_query (string) - property to be used to query
+
+    Return:
+        result of query (list)
+    ''' 
     result = query_document(collection_name, {property_query: {'$regex': f'{query_value}', '$options': '$i'}})
 
     return [x[property_desired] for x in result]
@@ -37,10 +42,3 @@ def query_location_fixed(location):
         raise InputError('invalid location input')
     else:
         return result[0]['ISO2']
-
-# def query_location_iso(iso):
-#     result = query_document('locations', {'ISO2': iso})
-#     return [x['country_region'] for x in result]
-
-if __name__ == '__main__':
-    print(query_document('locations', {'country_region': 'US'}))

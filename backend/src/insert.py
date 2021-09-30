@@ -13,3 +13,7 @@ def insert_analysis():
             # report['incident_rate'] = 
 
     return reports
+
+# def insert_document_property(collection_name, query_value, property_desired, property_query):
+
+

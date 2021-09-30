@@ -3,3 +3,7 @@ backend/env
 backend/reports
 backend/src/__pycache__
 scripts/
+backend/__pycache__
+backend/.pytest_cache
+backend/tests/.pytest_cache
+backend/tests/__pycache__

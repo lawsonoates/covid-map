@@ -24,12 +24,12 @@ def get_lookup_collection():
         file_data = csv.reader(file)
 
         for row in file_data:
-            if not row[lookup_indexes['Province_State']]:
+            if not row[lookup_indexes['Province_State']] and not row[lookup_indexes['iso2']] == '':
                 docs.append({
                     'UID': row[lookup_indexes['UID']],
                     'ISO2': row[lookup_indexes['iso2']],
                     'country_region': row[lookup_indexes['Country_Region']],
-                    'population': row[lookup_indexes['Population']]
+                    'population': int(row[lookup_indexes['Population']])
                 })
 
     return docs
@@ -166,6 +166,13 @@ def match_collection_id(collection_primary, collection_secondary):
         for entry_secondary in collection_secondary:
             if entry_secondary['country_region'] == country_region:
                 entry_secondary['location_id'] = temp_id
+            
+    # dont include reports that dont have lookup associated
+    for entry_secondary in collection_secondary:
+        if not 'location_id' in entry_secondary.keys():
+            collection_secondary.remove(entry_secondary)
+
+            
 
     return {
         'primary': collection_primary,
