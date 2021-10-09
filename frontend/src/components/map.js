@@ -9,7 +9,7 @@ function Map(props) {
 
     const [checked, setChecked] = useState([]);
 
-    const Mape = styled.div`
+    const WorldMap = styled.div`
         margin: 1rem auto;
         width: 65%;
 
@@ -39,13 +39,13 @@ function Map(props) {
         }
     `
 
+    // event handler for click on map
     const onClick = ({ target }) => {
-        // fetchLocation(target.attributes.id.v);
         props.onChange(target.attributes.location.value)
         setChecked([target.attributes.id.value])
-        // setChecked([target.attributes.id.value])
     }
 
+    // request iso2 used to update map DOM
     const fetchISO = async location => {
         const config = {
             method: 'post',
@@ -56,24 +56,24 @@ function Map(props) {
 
         try {
             const resp = await axios(config)
-            // return resp.data['iso'].toLowerCase()
             setChecked([resp.data['iso'].toLowerCase()])
         } catch (e) {
             console.log(e);
         }
     }
 
+    // update map when location changes
     useEffect(() => {
         if (props.location !== '') {
             fetchISO(props.location)
         }
-        
+
     }, [props.location]);
 
     return (
-        <Mape>
+        <WorldMap>
             <VectorMap className='WorldMap' {...World} layerProps={{ onClick }} checkedLayers={checked} />
-        </Mape>
+        </WorldMap>
     );
 }
 

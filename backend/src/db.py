@@ -1,136 +1,117 @@
-from pymongo import MongoClient
-from bson.objectid import ObjectId
 import csv
-import os
+import requests
 
+from pymongo import MongoClient
 from datetime import datetime
-from src.error import InputError
 
-CSV_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+from src.tools import read_json_file, write_json_file
 
 lookup_indexes = {}
 report_indexes = {}
 
-# Replace the uri string with your MongoDB deployment's connection string.
+OWID_DUMP_PATH = './owid-covid-latest.json'
+OWID_URL = 'https://covid.ourworldindata.org/data/latest/owid-covid-latest.json'
 DB_URL = "mongodb://localhost:27017"
-# set a 5-second connection timeout
+
 client = MongoClient(DB_URL)
 covid_stats = client['covid_stats']
 
-def get_lookup_collection():
-    docs = []
+def get_location_collection():
+    '''
+    Gathers all specified data from each valid country and returns each country amongst a list of
+    reports.
+
+    Arguments:
+        none
+
+    Return:
+        collection (list) - list of reports to form collection in db
+    ''' 
+
+    locations = []
 
     with open('lookup.csv') as file:
         file_data = csv.reader(file)
 
         for row in file_data:
             if not row[lookup_indexes['Province_State']] and not row[lookup_indexes['iso2']] == '':
-                docs.append({
-                    'UID': row[lookup_indexes['UID']],
+                locations.append({
+                    # 'UID': row[lookup_indexes['UID']],
                     'ISO2': row[lookup_indexes['iso2']],
+                    'ISO3': row[lookup_indexes['iso3']],
                     'country_region': row[lookup_indexes['Country_Region']],
                     'population': int(row[lookup_indexes['Population']])
                 })
 
-    return docs
+    return locations
 
 def get_reports_collection():
-    collection = []
+    '''
+    Gathers all specified data from each valid country and returns each country amongst a list of
+    reports.
 
-    folderpath = './reports'
-    files = os.listdir(folderpath)
+    Arguments:
+        none
 
-    file_count = 0
-    for filename in files:
-        filepath = folderpath + '/' + filename
+    Return:
+        reports (list) - list of reports to form collection in db
+    ''' 
 
-        with open(filepath) as file:
-            file_data = csv.reader(file)
+    reports = []
 
-            prev_value = ''
-            dataset = {}
-            row_count = 0
+    locations = covid_stats['locations'].find()
 
-            report = {
-                    'country_region': '',
-                    'last_update': '',
-                    'daily_reports': []
-                }
+    file_data = read_json_file(OWID_DUMP_PATH)
 
-            summary = {
-                'country_region': '',
-                'last_update': '',
-                'confirmed': 0,
-                'deaths': 0
-            }
-            
+    i = 0
+    for location in locations:
 
-            for row in file_data:
+        iso3 = location['ISO3']
 
-                # neglect header row
-                if row_count > 0:
+        owid_str = f'OWID_{iso3}'
 
-                    if row[report_indexes['Country_Region']] == summary['country_region']:
-                        summary['confirmed'] += int(row[report_indexes['Confirmed']])
-                        summary['deaths'] += int(row[report_indexes['Deaths']])
+        if iso3 in file_data.keys():
+            reports.append({
+                'location': file_data[iso3]['location'],
 
-                    else:
-                        collection = db_put_into_collection(summary, collection)
+                'total_cases': file_data[iso3]['total_cases'],
+                'new_cases': file_data[iso3]['new_cases'],
+                'new_cases_smoothed': file_data[iso3]['new_cases_smoothed'],
 
-                        summary = {
-                            'country_region': row[report_indexes['Country_Region']],
-                            'last_update': row[report_indexes['Last_Update']],
-                            'confirmed': int(row[report_indexes['Confirmed']]),
-                            'deaths': int(row[report_indexes['Deaths']])
-                        }
+                'tests_per_case': file_data[iso3]['tests_per_case'],
 
-                row_count += 1
+                'total_deaths': file_data[iso3]['total_deaths'],
 
-        file_count += 1
+                'reproduction_rate': file_data[iso3]['reproduction_rate'],
 
-    return collection
+                'people_fully_vaccinated_per_hundred': file_data[iso3]['people_fully_vaccinated_per_hundred'],
 
-def db_put_into_collection(summary, collection):
-
-    found = False
-    for location in collection:
-        if location['country_region'] == summary['country_region']:
-            location['last_update'] = db_latest_date(location['last_update'], summary['last_update'], CSV_TIME_FORMAT)
-            location['daily_reports'].append({
-                'confirmed': summary['confirmed'],
-                'deaths': summary['deaths']
+                'last_update_date': file_data[iso3]['last_updated_date'],
+                'location_id': location['_id']
             })
-            found = True
 
-    if not found:
-        collection.append({
-            'country_region': summary['country_region'],
-            'last_update': summary['last_update'],
-            'daily_reports': [{
-                'confirmed': summary['confirmed'],
-                'deaths': summary['deaths']
-            }]
-        })
+        # elif owid_str in file_data.keys():
+        #     collection.append({
+        #         'location': file_data[owid_str]['location'],
+        #         'total_cases': file_data[owid_str]['total_cases'],
+        #         'new_cases': file_data[owid_str]['new_cases'],
+        #         'new_cases_smoothed': file_data[owid_str]['new_cases_smoothed'],
+        #         'last_update_date': file_data[owid_str]['last_updated_date'],
+        #         'location_id': location['_id']
+        #     })
 
-    return collection
-
-def db_latest_date(date1, date2, format):
-
-    if date1 == '':
-        return date2
-    elif date2 == '':
-        return date1
-    else:
-        date1_date = datetime.strptime(date1, format)
-        date2_date = datetime.strptime(date2, format)
-
-        date_max = max([date1_date, date2_date])
-
-        date_str = date_max.strftime(format)
-
-        return date_str
+    return reports
 
 def db_indexes():
+    '''
+    Populates data within dictionaries to be used for other functions to easily reference csv data.
+
+    Arguments:
+        none
+
+    Return:
+        none
+    ''' 
 
     count = 0
     with open('./lookup.csv') as file:
@@ -156,61 +137,105 @@ def db_indexes():
 
             count += 1
 
-
-def match_collection_id(collection_primary, collection_secondary):
-
-    for entry_primary in collection_primary:
-        temp_id = ObjectId()
-        entry_primary['_id'] = temp_id
-        country_region = entry_primary['country_region']
-        for entry_secondary in collection_secondary:
-            if entry_secondary['country_region'] == country_region:
-                entry_secondary['location_id'] = temp_id
-            
-    # dont include reports that dont have lookup associated
-    for entry_secondary in collection_secondary:
-        if not 'location_id' in entry_secondary.keys():
-            collection_secondary.remove(entry_secondary)
-
-            
-
-    return {
-        'primary': collection_primary,
-        'secondary': collection_secondary
-    }
-
 def db_remove_collection(collection_names):
+    '''
+    Removes all collections specified from db.
+
+    Arguments:
+        collection_names (list) - list of collections to be removed
+
+    Return:
+        none
+    ''' 
+
     for name in collection_names:
         col = covid_stats[name]
         col.drop()
 
 def db_add_docs(collection_name, docs):
+    '''
+    Inserts docs into specified db collection.
+
+    Arguments:
+        collection_name (str) - name of collection to add doc
+        docs (list) - list of docs to add to collection
+
+    Return:
+        none
+    ''' 
     collection = covid_stats[collection_name]
-    doc_id = collection.insert_many(docs).inserted_ids
-    print(doc_id)
+    collection.insert_many(docs).inserted_ids
 
-def stats_max_daily_report(daily_reports):
-    
-    max = {'confirmed': 0, 'deaths': 0}
-    for day in daily_reports['reports']:
-        if day['confirmed'] > max['confirmed']:
-            max = day
+def get_new_update():
+    '''
+    Creates a HTTP request to download covid data from url. Writes to file if successful and calls
+    db_update().
 
-    return max
+    Arguments:
+        none
 
-def db_update(status):
+    Return:
+        none
+    ''' 
+
+    try:
+        req = requests.get(OWID_URL)
+    except requests.exceptions.ConnectionError:
+        print('connection refused')
+
+    # if ok request then write to file and update db
+    if req.status_code == 200:
+        write_json_file(OWID_DUMP_PATH, req.json())
+        db_update()
+
+def db_update():
+    '''
+    Calls functions to remove old data from db and add new data.
+
+    Arguments:
+        none
+
+    Return:
+        none
+    '''
+
     db_indexes()
-    collections = match_collection_id(get_lookup_collection(), get_reports_collection())
 
-    db_remove_collection(['reports', 'locations'])
+    db_remove_collection(['locations', 'reports'])
 
-    if status == 'all':
-        db_add_docs('reports', collections['secondary'])
-        db_add_docs('locations', collections['primary'])
-    elif status == 'r':
-        db_add_docs('reports', collections['secondary'])
+    db_add_docs('locations', get_location_collection())
+
+    db_add_docs('reports', get_reports_collection())
+    
+def db_refresh():
+    '''
+    Is called by client refresh request and determines if new request should be made for db data.
+    Criteria includes last refresh request time and date of current data.
+
+    Arguments:
+        none
+
+    Return:
+        'success' (str) - used to pass to client to confirm refresh has been attempted.
+    ''' 
+
+    today = datetime.today().strftime('%Y-%m-%d')
+    hour = datetime.now().hour
+
+    db_properties = read_json_file('./db_properties.json')
+
+    last_update_date = db_properties['last_update_date']
+    last_update_hour = db_properties['last_update_hour']
+
+    # updates if db is not current to the day and more than 1 hour has lapsed since last call
+    if last_update_date < today and last_update_hour < str(hour):
+        get_new_update()
+        write_json_file('./db_properties.json', {
+            "last_update_date": today,
+            "last_update_hour": hour
+        })
+
+    return 'success'
 
 if __name__ == '__main__':
-    db_indexes()
-
-    db_update('all')
+    get_new_update()

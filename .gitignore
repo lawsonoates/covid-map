@@ -1,9 +1,13 @@
 frontend/node_modules
+
 backend/env
 backend/reports
 backend/src/__pycache__
-scripts/
 backend/__pycache__
 backend/.pytest_cache
 backend/tests/.pytest_cache
 backend/tests/__pycache__
+backend/db_properties.json
+backend/owid-covid-latest.json
+
+scripts/

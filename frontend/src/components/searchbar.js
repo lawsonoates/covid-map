@@ -11,7 +11,8 @@ function Searchbar(props) {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const fetchRegion = async query => {
+    // requests results of query from backend
+    const requestQuery = async query => {
         setLoading(true);
 
         const config = {
@@ -39,9 +40,9 @@ function Searchbar(props) {
             loading={loading}
             value={query}
             results={results}
-            onSearchChange={(e) => { setQuery(e.target.value); fetchRegion(e.target.value) }}
+            onSearchChange={(e) => { setQuery(e.target.value); requestQuery(e.target.value) }}
             resultRenderer={resultRenderer}
-            onResultSelect={(e, data) => { props.onChange(data.result.location); setQuery('') }}
+            onResultSelect={(_, data) => { props.onChange(data.result.location); setQuery('') }}
         />
     )
 }

@@ -1,8 +1,4 @@
-from os import stat
-
-
 from src.query import query_document
-from src.tools import latest_daily_report
 
 def stats_query(location):
 
@@ -12,34 +8,15 @@ def stats_query(location):
     reports = query_document('reports', {'location_id': id})
     report = reports[0]
 
-    daily_report = latest_daily_report(report['daily_reports'])
-    # print(report)
-
     stats = {
-        'confirmed': daily_report['confirmed'],
-        'deaths': daily_report['deaths'],
-        'last_update': report['last_update'],
-        'incident_rate': report['incident_rate'],
-        'case_fatality_ratio': report['case_fatality_ratio']
+        'total_cases': report['total_cases'],
+        'new_cases_smoothed': report['new_cases_smoothed'],
+        'total_deaths': report['total_deaths'],
+        'last_update_date': report['last_update_date'],
+        'reproduction_rate': report['reproduction_rate'],
+        'people_fully_vaccinated_per_hundred': report['people_fully_vaccinated_per_hundred'],
+        'tests_per_case': report['tests_per_case']
+        # 'case_fatality_ratio': report['case_fatality_ratio']
     }
     
     return stats
-
-# def stats_latest_daily_report(daily_reports):
-#     '''
-#     Arguments:
-#         daily_reports (list of dictionaries) - daily reports
-
-#     Return:
-#         Latest daily report (dictionary)
-#     ''' 
-#     max = {'confirmed': 0, 'deaths': 0}
-#     for day in daily_reports:
-#         if day['confirmed'] > max['confirmed']:
-#             max = day
-
-#     return max
-
-
-if __name__ == '__main__':
-    print(stats_query('Australia'))

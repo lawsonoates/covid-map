@@ -1,9 +1,11 @@
+import json
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from src.query import query_document_property
 from src.search import search_query, search_iso
 from src.stats import stats_query
+from src.db import db_refresh
 
 APP = Flask(__name__)
 CORS(APP)
@@ -39,6 +41,11 @@ def search():
     payload = request.get_json()
     resp = search_query(payload['query'])
 
+    return jsonify(resp)
+
+@APP.route('/db_refresh', methods=['POST'])
+def db_refresh_HTTP():
+    resp = {'message': db_refresh()}
     return jsonify(resp)
 
 if __name__ == '__main__':
