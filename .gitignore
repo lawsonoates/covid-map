@@ -11,3 +11,5 @@ backend/db_properties.json
 backend/owid-covid-latest.json
 
 scripts/
+
+README.md
